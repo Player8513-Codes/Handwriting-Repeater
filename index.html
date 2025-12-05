@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handwriting Repeater</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="alertModal" class="alert-modal" style="display: none;">
+        <div class="alert-content">
+            <p id="alertMessage"></p>
+            <button id="alertOkBtn" class="btn btn-alert-ok">OK</button>
+        </div>
+    </div>
+
+    <div class="container" id="mainContainer">
+        <div class="top-nav">
+            <div class="logo">Made by Anyat Upadhyay</div>
+            <h2 style="flex: 1; text-align: center; margin: 0; color: #333; font-size: 20px;">Write Your Handwriting</h2>
+            <button id="fullscreenBtn" class="fullscreen-btn">⛶ Fullscreen</button>
+        </div>
+        
+        <div class="main-content">
+            <div class="canvas-section">
+                <div class="section">
+                    <div class="canvas-container">
+                        <canvas id="drawingCanvas"></canvas>
+                        <canvas id="replayCanvas" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
+                    </div>
+                </div>
+                
+                <div class="section" id="resultsSection" style="display: none;">
+                    <h2>Your Handwriting Repeated</h2>
+                    <div class="canvas-container">
+                        <canvas id="replayCanvas2"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar">
+                
+                <div class="rating-container" id="ratingContainerSidebar">
+                    <h3>Handwriting Rating</h3>
+                    <div class="rating-score" id="ratingScore">-</div>
+                </div>
+                <div class="star-badge" id="starBadge" aria-label="Handwriting neatness rating">☆☆☆☆☆</div>
+                <button id="submitBtn" class="btn btn-submit">Submit Handwriting</button>
+                
+                <div class="playback-controls" id="playbackControls" style="display: none;">
+                    <button id="playBtn" class="btn btn-play">▶ Play Animation</button>
+                    <button id="stopBtn" class="btn btn-stop" style="display: none;">⏹ Stop</button>
+                    <div class="speed-control">
+                        <span class="speed-label">Fast</span>
+                        <input type="range" min="0.5" max="3" step="0.5" value="1" id="speedSlider" class="speed-slider">
+                        <span class="speed-label">Slow</span>
+                    </div>
+                </div>
+                
+                <button id="againBtn" class="btn btn-again" style="display: none;">Write Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

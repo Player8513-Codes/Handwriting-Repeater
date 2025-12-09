@@ -15,6 +15,7 @@ class HandwritingRepeater {
         this.animationFrame = null;
         this.playbackSpeed = 1;
         this.redLineCrossed = false;
+        this.maxDistanceBetweenPoints = 30; // Maximum distance in pixels to connect two points
         
         this.setupCanvasDPI();
         this.attachEventListeners();
@@ -123,7 +124,23 @@ class HandwritingRepeater {
             ctx.moveTo(stroke[0].x, stroke[0].y);
             
             for (let i = 1; i < stroke.length; i++) {
-                ctx.lineTo(stroke[i].x, stroke[i].y);
+                const prevPoint = stroke[i - 1];
+                const currPoint = stroke[i];
+                
+                // Check distance between points
+                const dx = currPoint.x - prevPoint.x;
+                const dy = currPoint.y - prevPoint.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Only draw line if distance is within threshold
+                if (distance <= this.maxDistanceBetweenPoints) {
+                    ctx.lineTo(currPoint.x, currPoint.y);
+                } else {
+                    // Break the line and start a new path
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(currPoint.x, currPoint.y);
+                }
             }
             ctx.stroke();
         }
@@ -144,7 +161,23 @@ class HandwritingRepeater {
             this.replayCtx.beginPath();
             this.replayCtx.moveTo(stroke[0].x, stroke[0].y);
             for (let i = 1; i < stroke.length; i++) {
-                this.replayCtx.lineTo(stroke[i].x, stroke[i].y);
+                const prevPoint = stroke[i - 1];
+                const currPoint = stroke[i];
+                
+                // Check distance between points
+                const dx = currPoint.x - prevPoint.x;
+                const dy = currPoint.y - prevPoint.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Only draw line if distance is within threshold
+                if (distance <= this.maxDistanceBetweenPoints) {
+                    this.replayCtx.lineTo(currPoint.x, currPoint.y);
+                } else {
+                    // Break the line and start a new path
+                    this.replayCtx.stroke();
+                    this.replayCtx.beginPath();
+                    this.replayCtx.moveTo(currPoint.x, currPoint.y);
+                }
             }
             this.replayCtx.stroke();
         }
@@ -243,19 +276,28 @@ class HandwritingRepeater {
 
         this.drawCtx.beginPath();
         const prevPoint = this.currentStroke[this.currentStroke.length - 2];
-        this.drawCtx.moveTo(prevPoint.x, prevPoint.y);
-        this.drawCtx.lineTo(x, y);
-        this.drawCtx.stroke();
         
-        // Draw on overlay canvas in real-time
-        this.replayCtx.strokeStyle = strokeColor;
-        this.replayCtx.lineWidth = 2;
-        this.replayCtx.lineJoin = 'round';
-        this.replayCtx.lineCap = 'round';
-        this.replayCtx.beginPath();
-        this.replayCtx.moveTo(prevPoint.x, prevPoint.y);
-        this.replayCtx.lineTo(x, y);
-        this.replayCtx.stroke();
+        // Check distance between previous point and current point
+        const dx = x - prevPoint.x;
+        const dy = y - prevPoint.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        // Only draw line if distance is within threshold
+        if (distance <= this.maxDistanceBetweenPoints) {
+            this.drawCtx.moveTo(prevPoint.x, prevPoint.y);
+            this.drawCtx.lineTo(x, y);
+            this.drawCtx.stroke();
+            
+            // Draw on overlay canvas in real-time
+            this.replayCtx.strokeStyle = strokeColor;
+            this.replayCtx.lineWidth = 2;
+            this.replayCtx.lineJoin = 'round';
+            this.replayCtx.lineCap = 'round';
+            this.replayCtx.beginPath();
+            this.replayCtx.moveTo(prevPoint.x, prevPoint.y);
+            this.replayCtx.lineTo(x, y);
+            this.replayCtx.stroke();
+        }
     }
 
     stopDrawing(e) {
@@ -318,7 +360,23 @@ class HandwritingRepeater {
             this.replayCtx2.moveTo(stroke[0].x, stroke[0].y);
             
             for (let i = 1; i < stroke.length; i++) {
-                this.replayCtx2.lineTo(stroke[i].x, stroke[i].y);
+                const prevPoint = stroke[i - 1];
+                const currPoint = stroke[i];
+                
+                // Check distance between points
+                const dx = currPoint.x - prevPoint.x;
+                const dy = currPoint.y - prevPoint.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Only draw line if distance is within threshold
+                if (distance <= this.maxDistanceBetweenPoints) {
+                    this.replayCtx2.lineTo(currPoint.x, currPoint.y);
+                } else {
+                    // Break the line and start a new path
+                    this.replayCtx2.stroke();
+                    this.replayCtx2.beginPath();
+                    this.replayCtx2.moveTo(currPoint.x, currPoint.y);
+                }
             }
             this.replayCtx2.stroke();
         }
@@ -360,7 +418,23 @@ class HandwritingRepeater {
                 
                 const endIndex = Math.min(pointIndex, allPoints.length - 1);
                 for (let i = 1; i <= endIndex; i++) {
-                    this.replayCtx2.lineTo(allPoints[i].x, allPoints[i].y);
+                    const prevPoint = allPoints[i - 1];
+                    const currPoint = allPoints[i];
+                    
+                    // Check distance between points
+                    const dx = currPoint.x - prevPoint.x;
+                    const dy = currPoint.y - prevPoint.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // Only draw line if distance is within threshold
+                    if (distance <= this.maxDistanceBetweenPoints) {
+                        this.replayCtx2.lineTo(currPoint.x, currPoint.y);
+                    } else {
+                        // Break the line and start a new path
+                        this.replayCtx2.stroke();
+                        this.replayCtx2.beginPath();
+                        this.replayCtx2.moveTo(currPoint.x, currPoint.y);
+                    }
                 }
                 this.replayCtx2.stroke();
                 

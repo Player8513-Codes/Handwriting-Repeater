@@ -15,6 +15,7 @@ class HandwritingRepeater {
         this.animationFrame = null;
         this.playbackSpeed = 1;
         this.redLineCrossed = false;
+        this.lastMousePos = null;
         
         this.setupCanvasDPI();
         this.attachEventListeners();
@@ -29,11 +30,11 @@ class HandwritingRepeater {
         // Get container dimensions
         const container = document.getElementById('mainContainer');
         let width = 800;
-        let height = 600;
+        let height = 300;
         
         if (document.fullscreenElement) {
             width = window.innerWidth - 40;
-            height = window.innerHeight - 120;
+            height = (window.innerHeight - 120) / 2;
         }
         
         this.canvasWidth = width;
@@ -50,13 +51,13 @@ class HandwritingRepeater {
         }
         
         // Scale canvas CSS size
-        this.drawingCanvas.style.width = width + 'px';
-        this.drawingCanvas.style.height = height + 'px';
-        this.replayCanvas.style.width = width + 'px';
-        this.replayCanvas.style.height = height + 'px';
+        this.drawingCanvas.style.width = '100%';
+        this.drawingCanvas.style.height = '600px';
+        this.replayCanvas.style.width = '100%';
+        this.replayCanvas.style.height = '600px';
         if (this.replayCanvas2) {
-            this.replayCanvas2.style.width = width + 'px';
-            this.replayCanvas2.style.height = height + 'px';
+            this.replayCanvas2.style.width = '100%';
+            this.replayCanvas2.style.height = '600px';
         }
         
         // Reset and scale context
@@ -193,8 +194,17 @@ class HandwritingRepeater {
         if (fullscreenBtn) fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
         if (playBtn) playBtn.addEventListener('click', () => this.playAnimation());
         if (stopBtn) stopBtn.addEventListener('click', () => this.stopAnimation());
-        if (speedSlider) speedSlider.addEventListener('change', (e) => {
-            this.playbackSpeed = parseFloat(e.target.value);
+        if (speedSlider) speedSlider.addEventListener('input', (e) => {
+            // Value ranges from 0.5 (slow) to 3 (fast)
+            // We want: 0.5 → 0.5x speed, 1.75 (middle) → 1x speed, 3 → 1.5x speed
+            const value = parseFloat(e.target.value);
+            if (value <= 1.75) {
+                // Map 0.5-1.75 to 0.5x-1x speed
+                this.playbackSpeed = 0.5 + ((value - 0.5) / 1.25) * 0.5;
+            } else {
+                // Map 1.75-3 to 1x-1.5x speed
+                this.playbackSpeed = 1 + ((value - 1.75) / 1.25) * 0.5;
+            }
         });
     }
 
@@ -218,6 +228,7 @@ class HandwritingRepeater {
         this.isDrawing = true;
         const { x, y } = this.getCanvasCoordinates(e);
         this.currentStroke = [{ x, y }];
+        this.lastMousePos = { x, y };
     }
 
     draw(e) {
@@ -225,6 +236,19 @@ class HandwritingRepeater {
         e.preventDefault();
 
         const { x, y } = this.getCanvasCoordinates(e);
+        
+        // Check if movement is incremental from last drawn point
+        const lastPoint = this.currentStroke[this.currentStroke.length - 1];
+        const distance = Math.sqrt(
+            Math.pow(x - lastPoint.x, 2) + 
+            Math.pow(y - lastPoint.y, 2)
+        );
+        
+        // If distance is too large (mouse teleported), don't draw
+        if (distance > 30) {
+            return;
+        }
+        
         this.currentStroke.push({ x, y });
 
         const onRed = this.isOnRedLine(y);
@@ -242,20 +266,27 @@ class HandwritingRepeater {
         this.drawCtx.lineCap = 'round';
 
         this.drawCtx.beginPath();
-        const prevPoint = this.currentStroke[this.currentStroke.length - 2];
-        this.drawCtx.moveTo(prevPoint.x, prevPoint.y);
+        const drawPrevPoint = this.currentStroke[this.currentStroke.length - 2];
+        this.drawCtx.moveTo(drawPrevPoint.x, drawPrevPoint.y);
         this.drawCtx.lineTo(x, y);
         this.drawCtx.stroke();
         
-        // Draw on overlay canvas in real-time
-        this.replayCtx.strokeStyle = strokeColor;
-        this.replayCtx.lineWidth = 2;
-        this.replayCtx.lineJoin = 'round';
-        this.replayCtx.lineCap = 'round';
-        this.replayCtx.beginPath();
-        this.replayCtx.moveTo(prevPoint.x, prevPoint.y);
-        this.replayCtx.lineTo(x, y);
-        this.replayCtx.stroke();
+        // Update overlay to show completed strokes + current stroke in progress
+        this.redrawReplayOverlay();
+        
+        // Draw current stroke in progress on overlay
+        if (this.currentStroke.length > 1) {
+            this.replayCtx.strokeStyle = strokeColor;
+            this.replayCtx.lineWidth = 2;
+            this.replayCtx.lineJoin = 'round';
+            this.replayCtx.lineCap = 'round';
+            this.replayCtx.beginPath();
+            this.replayCtx.moveTo(this.currentStroke[0].x, this.currentStroke[0].y);
+            for (let i = 1; i < this.currentStroke.length; i++) {
+                this.replayCtx.lineTo(this.currentStroke[i].x, this.currentStroke[i].y);
+            }
+            this.replayCtx.stroke();
+        }
     }
 
     stopDrawing(e) {
@@ -342,11 +373,14 @@ class HandwritingRepeater {
         if (allPoints.length === 0) return;
         
         let pointIndex = 0;
-        const pointsPerFrame = Math.max(1, Math.ceil(allPoints.length / (120 * this.playbackSpeed)));
         
         const animate = () => {
             this.replayCtx2.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
             this.drawLines(this.replayCtx2);
+            
+            // Calculate points per frame based on speed (higher speed = more points per frame)
+            const basePointsPerFrame = Math.max(1, Math.ceil(allPoints.length / 120));
+            const pointsPerFrame = Math.max(1, Math.ceil(basePointsPerFrame * this.playbackSpeed));
             
             // Draw all points up to current index
             if (pointIndex < allPoints.length) {

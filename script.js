@@ -16,6 +16,11 @@ class HandwritingRepeater {
         this.playbackSpeed = 1;
         this.redLineCrossed = false;
         
+        // Speed limit settings to prevent teleporting pen lines
+        this.maxPixelDistance = 30; // Maximum pixels per frame to consider valid
+        this.lastPointTime = 0;
+        this.minTimeBetweenPoints = 10; // Minimum milliseconds between points
+        
         this.setupCanvasDPI();
         this.attachEventListeners();
         window.addEventListener('resize', () => this.handleResize());
@@ -221,6 +226,7 @@ class HandwritingRepeater {
         this.isDrawing = true;
         const { x, y } = this.getCanvasCoordinates(e);
         this.currentStroke = [{ x, y }];
+        this.lastPointTime = Date.now();
     }
 
     draw(e) {
@@ -228,6 +234,26 @@ class HandwritingRepeater {
         e.preventDefault();
 
         const { x, y } = this.getCanvasCoordinates(e);
+        
+        // Check distance from previous point
+        const prevPoint = this.currentStroke[this.currentStroke.length - 1];
+        const distance = Math.sqrt(Math.pow(x - prevPoint.x, 2) + Math.pow(y - prevPoint.y, 2));
+        
+        // Check if distance exceeds maximum allowed (teleport detection)
+        if (distance > this.maxPixelDistance) {
+            // Too far - start a new stroke instead
+            this.stopDrawing(e);
+            this.startDrawing(e);
+            return;
+        }
+        
+        // Check time between points
+        const currentTime = Date.now();
+        if (currentTime - this.lastPointTime < this.minTimeBetweenPoints) {
+            return; // Skip this point if too soon
+        }
+        this.lastPointTime = currentTime;
+        
         this.currentStroke.push({ x, y });
 
         const onRed = this.isOnRedLine(y);
@@ -245,7 +271,6 @@ class HandwritingRepeater {
         this.drawCtx.lineCap = 'round';
 
         this.drawCtx.beginPath();
-        const prevPoint = this.currentStroke[this.currentStroke.length - 2];
         this.drawCtx.moveTo(prevPoint.x, prevPoint.y);
         this.drawCtx.lineTo(x, y);
         this.drawCtx.stroke();
@@ -297,9 +322,14 @@ class HandwritingRepeater {
     }
 
     isOnRedLine(y) {
-        const period = 174; // matches background-size height (doubled from 87)
+        const period = 174; // 3 lines × 58 pixels each
+        const lineHeight = 58;
         const offset = y % period;
-        return offset >= 0 && offset <= 2;
+        // Red line is the second line in the pattern (grey, red, grey)
+        // It's drawn at position 58 in each period, check a narrow range around it
+        const redLinePos = lineHeight;
+        const tolerance = 2; // pixels around the line to consider "on" the line
+        return Math.abs(offset - redLinePos) <= tolerance;
     }
 
     replay() {

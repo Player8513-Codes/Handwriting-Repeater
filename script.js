@@ -297,9 +297,9 @@ class HandwritingRepeater {
     }
 
     isOnRedLine(y) {
-        const period = 87; // matches background-size height
+        const period = 174; // matches background-size height (doubled from 87)
         const offset = y % period;
-        return offset >= 58 && offset <= 60;
+        return offset >= 0 && offset <= 2;
     }
 
     replay() {

@@ -181,39 +181,22 @@ canvas {
             #cccccc 0px,
             #cccccc 1px,
             white 1px,
-            white 29px,
-            #cccccc 29px,
-            #cccccc 30px,
-            white 30px,
-            white 58px,
-            #ff0000 58px,
-            #ff0000 59px,
             white 59px,
-            white 87px
+            #cccccc 59px,
+            #cccccc 60px,
+            white 60px,
+            white 116px,
+            #ff0000 116px,
+            #ff0000 117px,
+            white 117px,
+            white 174px
         );
-    background-size: 100% 87px;
+    background-size: 100% 174px;
     background-repeat: repeat-y;
 }
 
 #replayCanvas {
-    background-image: 
-        repeating-linear-gradient(
-            to bottom,
-            #cccccc 0px,
-            #cccccc 1px,
-            white 1px,
-            white 29px,
-            #cccccc 29px,
-            #cccccc 30px,
-            white 30px,
-            white 58px,
-            #ff0000 58px,
-            #ff0000 59px,
-            white 59px,
-            white 87px
-        );
-    background-size: 100% 87px;
-    background-repeat: repeat-y;
+    background: white;
 }
 
 .btn {

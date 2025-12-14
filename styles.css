@@ -178,16 +178,16 @@ canvas {
     background-image: 
         repeating-linear-gradient(
             to bottom,
-            #cccccc 0px,
-            #cccccc 1px,
+            #ff0000 0px,
+            #ff0000 1px,
             white 1px,
-            white 59px,
+            white 58px,
+            #cccccc 58px,
             #cccccc 59px,
-            #cccccc 60px,
-            white 60px,
+            white 59px,
             white 116px,
-            #ff0000 116px,
-            #ff0000 117px,
+            #cccccc 116px,
+            #cccccc 117px,
             white 117px,
             white 174px
         );
